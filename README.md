@@ -203,9 +203,8 @@ rm stage3-amd64-20210224T214503Z.tar.xz
 Before we proceed with the installation, copy the provided *make.conf* file to the configuration in */mnt/gentoo/etc/portage/make.conf*.
 
 ```
-cd /mnt/gentoo/home
 wget https://github.com/Razorfang/MyGentoo/raw/main/make.conf
-mv /mnt/gentoo/home/make.conf /mnt/gentoo/etc/portage/make.conf
+mv make.conf /mnt/gentoo/etc/portage/make.conf
 ```
 
 Gentoo uses a package manager and distribution system called *portage*, which allows you to manage packages, install and build packages differently depending on different flags, and change some pre-configured Gentoo settings.
@@ -217,15 +216,74 @@ For example, there is a variable called *USE* which controls which features pack
 You can read the man page for make.conf to see every supported flag, which will be useful for tweaking your own installation.
 
 
-## Preparing the System
+## Preparing the Environment
 
-Before entering the new gentoo environment, you'll need to copy some networking settings.
+It's almost time to start work inside the new Gentoo environment. Before entering, you'll need to copy some networking settings.
 ```
 cp --dereference /etc/resolv.conf /mnt/gentoo/etc/
 ```
 
-TO BE CONTINUED
+Next, you need to copy the list of repositories that you'll get everything from.
+```
+mkdir --partents /mnt/gentoo/etc/portage/repos.conf
+cp /usr/share/portage/config/repos.conf /mnt/gentoo/etc/portage/repos.conf/gentoo.conf
+```
 
-## Users
+The next step is mounting all the file systems the kernel will need; /proc/, /sys/, and /dev/.
+```
+mount --types proc /proc /mnt/gentoo/proc
+mount --rbind /sys /mnt/gentoo/sys
+mount --make-rslave /mnt/gentoo/sys
+mount --rbind /dev /mnt/gentoo/dev
+mount --make-rslave /mnt/gentoo/dev
+```
 
-## Display
+Now you need to enter the new environment. After this point, all actions will be performed from inside the new Gentoo environment.
+```
+chroot /mnt/gentoo /bin/bash
+source /etc/profile
+export PS1="(chroot) ${PS1}"
+```
+
+**------------------------------------------------------------------------------------------------------**
+**If you significantly mess up any stage beyond this point, you should be able to start again from here.**
+**------------------------------------------------------------------------------------------------------**
+
+Anyway, you'll need to mount the boot directory to perform the next steps:
+```
+mount /dev/sdb2 /boot
+```
+
+## Emerge
+
+The next step is to install a snapshot of the gentoo ebuild repository. This is used by Portage to help build your system. To do this:
+```
+emerge-webrsync
+```
+
+You can now use the *emerge* command-line tool to install packages. But first, we need to choose our *profile*. Think of a profile as a building block for a Gentoo system. It sets how packages are built by default, default compiler options, allowed package versions, etc. It is possible, but non-trivial, to change profiles later, so keep that in mind.
+
+To list all the profiles, do this command. Your output may differ:
+```
+eselect profile list
+
+Available profile symlink targets:
+  [1]  default/linux/amd64/17.1 (stable) *
+  [2]  default/linux/amd64/17.1/selinux (stable)
+  [3]  default/linux/amd64/17.1/hardened (stable)
+...
+```
+
+The star means this is your currently selected profile. I will be using the **hardened** profile. To select it, I will run:
+```
+eselect profile set 3
+# Or whatever number corresponds to basic hardened profile.
+```
+
+After selecting a profile, you must update the system's *@world set*, which is just all the packages a profile uses. You should also use this if you ever make any changes to the USE flag in your make.conf.
+
+Running the following command will take a long time, so it's the perfect time to have a break. If you want to run it and see what packages would be installed, add the *-pv* flags at the end. This way, you can double-check which USE flags these packages will install with. To actually install the packages, remove the *-pv*.
+```
+emerge --ask --verbose --update --deep --newuse [-pv] @world
+```
+
