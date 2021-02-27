@@ -198,13 +198,33 @@ tar xpvf stage3-amd64-20210224T214503Z.tar.xz --xattrs-include='*.*' --numeric-o
 rm stage3-amd64-20210224T214503Z.tar.xz
 ```
 
-## A World of Packages
+## make.conf
 
-Gentoo uses a package manager called *portage*, which allows you to not only manage packages, but install and build them differently depending on different flags. This is done using an environment variable called *USE*, which will contain flags such as *nvidia* or *-bluetooth* to add and subtract features from your packages.
+Before we proceed with the installation, copy the provided *make.conf* file to the configuration in */mnt/gentoo/etc/portage/make.conf*.
 
-A lot of your customisation will be done from a file called *make.conf*, which is stored in */etc/portage/make.conf* on most Gentoo systems. Here, you can add and remove flags from *USE*. For example, if you use an Nvidia graphics card and an Intel CPU, and you don't want to build any AMD features into your packages, you can update the value of *USE* in *make.conf*. How you configure this file is entirely system-dependent, but this repository contains my own *make.conf*, commented to help you make your own decisions.
+```
+cd /mnt/gentoo/home
+wget https://github.com/Razorfang/MyGentoo/raw/main/make.conf
+mv /mnt/gentoo/home/make.conf /mnt/gentoo/etc/portage/make.conf
+```
 
-Copy the provided make.conf file to the configuration in */mnt/gentoo/etc/portage/make.conf*.
+Gentoo uses a package manager and distribution system called *portage*, which allows you to manage packages, install and build packages differently depending on different flags, and change some pre-configured Gentoo settings.
+
+A lot of your customisation will be done from a file called *make.conf*, which is stored in */etc/portage/make.conf* on most Gentoo systems. How you configure this file is entirely system-dependent, but this repository contains my own *make.conf*, commented to help you make your own decisions.
+
+For example, there is a variable called *USE* which controls which features packages are built with by default, *VIDEO_CARDS* which controls supported GPUs, and *GRUB_PLATFORMS* to install the correct version of GRUB during this installation.
+
+You can read the man page for make.conf to see every supported flag, which will be useful for tweaking your own installation.
+
+
+## Preparing the System
+
+Before entering the new gentoo environment, you'll need to copy some networking settings.
+```
+cp --dereference /etc/resolv.conf /mnt/gentoo/etc/
+```
+
+TO BE CONTINUED
 
 ## Users
 
