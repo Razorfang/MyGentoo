@@ -287,3 +287,91 @@ Running the following command will take a long time, so it's the perfect time to
 emerge --ask --verbose --update --deep --newuse [-pv] @world
 ```
 
+Optionally, you can replace the default text editor (Nano) with something else. I prefer using Vim, so I will replace Nano with Vim in this step:
+```
+emerge -q app-editors/vim
+```
+
+## Setting your Timezone and Locale
+
+The next step is updating your timezone, to make sure your PC displays the correct time after installation. If you live in a different time zone than I do, please look up what yours is by typing *ls /usr/share/zoneinfo*
+```
+echo "Pacific/Auckland" > /etc/timezone
+emerge --config sys-libs/timezone-data
+```
+
+Now we're going to set our locale, which defines how dates are displayed, what alphabet you use, etc. This guide contains a New Zealand locale.gen file, but you can edit it for your own locale
+```
+cd /tmp
+wget https://github.com/Razorfang/MyGentoo/raw/main/locale.gen
+cp /tmp/locale.gen /etc/locale.gen
+rm /tmp/locale.gen
+locale-gen
+eselect locale list
+# Find your locale in the list. In my case, I want en_NZ.utf8, which has index 6
+eselect locale set 6
+env-update
+source /etc/profile && export PS1="(chroot) ${PS1}"
+```
+
+## Kernel configuration
+
+Gentoo encourages users to configure the Linux kernel to their own liking. Don't worry, it sounds harder than it is. You could use *genkernel* to automatically configure it, but this guide will opt for manual configuration.
+
+First, install the Linux kernel source code.
+```
+emerge --ask sys-kernel/gentoo-sources
+```
+
+Next, install pciutils, which is required if you are using PCI devices (such as graphics cards)
+```
+emerge -q sys-apps/pciutils
+```
+
+Now, before we go any further, you must know what your PC is like. You need to know what you want, and don't want, to support. Turning off random settings will cause a ton of trouble, so only turn off settings you KNOW you don't want (e.g. AMD drivers since I'm using an Nvidia graphics card). I will post my kernel configuration in this guide, but **it is tailored for my PC, and may or may not work for you**. Please check my configuration against what you need. If you are not sure, just skip the all custom configuration, since you can do that later.
+
+You can find more information about kernel configuration [here](https://wiki.gentoo.org/wiki/Kernel/Gentoo_Kernel_Configuration_Guide). Strictly speaking, kernel configuration is not essential, but it is recommended.
+
+To begin kernel configuration, you need to run this:
+```
+cd /usr/src/linux
+make menuconfig
+```
+
+This will bring you into a large menu, full of options under more options under even more options. Some examples of my configuration are:
+* Disabled wifi support
+* Disabled AMD microcode support
+* Enabled kernel virtualisation (KVM)
+
+Make your own changes and save them. Afterwards, we build the kernel.
+```
+make
+make modules_install
+make install
+```
+
+## Making an initramfs
+
+To make it easier for the kernel to boot your system, we will create what's called an *initramfs*. This is basically an archive of information used by the kernel before your system's init system (like OpenRC) starts.
+
+```
+# If you copied my config, specify the full path to that file as the argument to --kernel-config instead
+# --lvm means enable LVM support and --mdadm enables software RAID
+emerge --ask sys-kernel/genkernel
+genkernel --lvm --mdadm --install --kernel-config=/usr/src/linux/.config initramfs
+
+# This step installs additional firmware for devices like network interfaces.
+emerge --ask sys-kernel/linux-firmware
+```
+
+## Creating /etc/fstab
+
+All partitions of your system must be listed inside the file */etc/fstab*. To configure this file, you will need to find the *UUID* of each partition, which is a unique identifier for that partition. To find the UUIDs, run this command, **replacing /dev/sdb with your hard drive's name**:
+```
+blkid | grep /dev/sdb
+```
+**This repository contains my /etc/fstab file. Replace the UUID of each partition with your own UUIDs, then copy it to /etc/fstab.**
+
+## Networking Configuration
+
+TO BE CONTINUED
