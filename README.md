@@ -374,4 +374,105 @@ blkid | grep /dev/sdb
 
 ## Networking Configuration
 
+Optional: Change your PC's name by editing */etc/conf.d/hostname*. This isn't an IP address; it's a nice name like "GentooBox" or "MyPC".
+
+Now we're going to configure a DHCP client. Please note, this guide will NOT cover configuring wi-fi, since I won't be using it on my PC.
+
+First, download this:
+```
+emerge --ask --noreplace net-misc/netifrc
+```
+Next, we're going to specify which interface we're using. In my case, I'm using a wired connection over the interface *enp3s0*. To find which interface you should use, run *ifconfig* or *ip addr* and find the interface with your PC's IP address on it. Open the file */etc/conf.d/net*, and write the following, replacing <interface> with your interface:
+```
+config_<interface>="dhcp"
+```
+
+Next we will make sure the system runs DHCP at boot:
+```
+emerge net-misc/dhcpcd
+cd /etc/init.d
+ln -s net.lo net.<interface>
+rc-update add net.enp3s0 default`
+```
+
+## Other Steps
+
+While we're at it, let's set the root password:
+```
+passwd
+# Type in your root password now
+```
+
+And install filesystem tools:
+```
+emerge sys-fs/dosfstools
+emerge sys-fs/e2fsprogs
+
+```
+
+Optional: And install a logging daemon:
+```
+emerge app-admin/sysklogd
+rc-update add sysklogd default`
+```
+
+Optional: And a cron daemon, for scheduling commands:
+```
+emerge sys-process/cronie
+rc-update add cronie default
+```
+
+Optional: And allow remote access:
+```
+rc-update add sshd default
+```
+
+Optional: And improve file indexing:
+```
+emerge --ask sys-apps/mlocate
+```
+
+## Bootloader
+
+To actually boot the system, we need a bootloader. We'll be using GRUB2:
+```
+emerge --ask --verbose sys-boot/grub:2
+grub-install --target=x86_64-efi --efi-directory=/boot
+grub-mkconfig -o /boot/grub/grub.cfg
+```
+
+## Configuring Users
+
+Now, we'll install sudo, so that we can run commands as root after installation finishes:
+```
+emerge app-admin/sudo
+```
+
+TODO: Configuration of file *sudoers*
+
+We're now going to add another user, since currently, we are root, which is the only user:
+```
+useradd -m -G users,wheel,audio -s /bin/bash <username>
+passwd <username>
+```
+
+Finally, we need to unmount everything and reboot the system. **Replace sdbX with your partitions if needed**:
+```
+umount /dev/sdb5
+umount /dev/sdb4
+umount /dev/sdb2
+umount -R /mnt/gentoo
+```
+
+And now, the big one; rebooting. Make sure you boot into the newly set up hard drive, and not your live image:
+```
+reboot
+```
+
+If you make it past GRUB and to the login prompt, try logging in as the user you added. If you can, try pinging something you consider important. If you can, then **congratulations, everything worked!** The only thing though is that you just have a plain black terminal with white text. The next part of the guide will involve customisation.
+
+## Configuring an X-server
+
+## Configuring a Display Manager
+
 TO BE CONTINUED
