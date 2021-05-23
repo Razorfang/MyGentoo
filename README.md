@@ -99,7 +99,7 @@ Name this partition 'swap'
 name 3 swap
 ```
 Create the root partition, which is where everything required for a working Linux system resides, as well as all files that aren't on a separate partition, such as third-party binaries. If you don't want a /home partition, this occupies all the remaining disk space, but we want a separate home partition. I'm going to install a lot of stuff on my PC, so I want plenty of space in my /root partition, so I'm choosing 64GB arbitrarily. Most people say to use 20GB to 30GB, but I have plenty of disk space, so I'm going with 64GB.
-**Replace 13443 with the value you calculated in the previous step. The end value will be that value plus 6553**
+**Replace 13443 with the value you calculated in the previous step. The end value will be that value plus 65536**
 ```
 mkpart primary 13443 78979
 ```
