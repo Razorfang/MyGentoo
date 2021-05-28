@@ -473,6 +473,50 @@ If you make it past GRUB and to the login prompt, try logging in as the user you
 
 ## Configuring an X-server
 
+After the reboot, try logging in as a non-root user, to ensure you can do whatever you need. From this point on, the guide will be assuming you are not root.
+
+At this stage, when you log in, you should have a simple black screen, displaying your username and hostname. The next step is to create a graphical environment. This will be achieved by installing what is called *x11* (sometimes just *x*), which is used to draw nice-looking graphics on your screen.
+
+```
+sudo emerge --ask --verbose x11-base/xorg-drivers
+sudo emerge --ask --verbose x11-base/xorg-server
+sudo emerge --ask --verbose x11-apps/xinit
+sudo emerge --update --ask --deep --newuse ---with-bdeps=y @world
+sudo startx
+```
+
+
+Display manager
+```
+sudo emerge --ask --verbose x11-misc/sddm
+usermod -a -G video sddm
+sudo emerge --ask --verbose gui-libs/display-manager-init
+sudo emerge --ask --verbose x11-terms/xterm x11-wm/twm x11-apps/xclock
+```
+FILE /etc/conf.d/display-manager
+DISPLAYMANAGER="sddm"
+OR IS IT
+DISPLAYMANAGER="xdm"
+
+
+root #rc-update add dbus default
+root #rc-update add display-manager default
+To start LightDM now:
+
+root #rc-service dbus start
+root #rc-service display-manager start
+
+Window manager
+
+```
+sudo USE="xinerama" emerge --ask --verbose x11-wm/i3
+sudo emerge --ask --verbose x11-misc/dmenu
+sudo emerge --ask --verbose sys-apps/accountsservice
+sudo USE="pulseaudio" emerge --ask --verbose x11-misc/i3status x11-misc/i3lock
+```
+
+Now when you reboot again, you should be brought to a login screen.
+
 ## Configuring a Display Manager
 
 TO BE CONTINUED
