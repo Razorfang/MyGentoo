@@ -178,7 +178,7 @@ rm stage3-amd64-20210224T214503Z.tar.xz
 
 Gentoo uses a package manager and distribution system called *portage*, which allows you to manage packages, install and build packages differently depending on different flags, and change some pre-configured Gentoo settings.
 
-A lot of your customisation will be done from a file called *make.conf*, which is stored in */etc/portage/make.conf* on most Gentoo systems. How you configure this file is entirely system-dependent, depending on any graphics cards you use, what software licenses you want to use, among other things.
+A lot of your customisation will be done from a file called *make.conf*, which is stored in */mnt /gentoo/etc/portage/make.conf* on most Gentoo systems. How you configure this file is entirely system-dependent, depending on any graphics cards you use, what software licenses you want to use, among other things.
 
 For example, there is a variable called *USE* which controls which features packages are built with by default, *VIDEO_CARDS* which controls supported GPUs, and *GRUB_PLATFORMS* to install the correct version of GRUB during this installation.
 
@@ -267,7 +267,6 @@ USE="alsa elogind examples ipv6 multilib nouveau nvidia opengl pulseaudio qt4 qt
 
 ```
 
-
 ## Preparing the Environment
 
 It's almost time to start work inside the new Gentoo environment. Before entering, you'll need to copy some networking settings.
@@ -303,7 +302,7 @@ export PS1="(chroot) ${PS1}"
 
 Anyway, you'll need to mount the boot directory to perform the next steps:
 ```
-mount /dev/sdb2 /boot
+mount /dev/sda2 /boot
 ```
 
 ## Emerge
@@ -326,10 +325,10 @@ Available profile symlink targets:
 ...
 ```
 
-The star means this is your currently selected profile. I will be using the **hardened** profile. To select it, I will run:
+The star means this is your currently selected profile. I will be using the default profile. To select it, I will run:
 ```
-eselect profile set 3
-# Or whatever number corresponds to basic hardened profile.
+eselect profile set 1
+# Or whatever number corresponds to basic profile.
 ```
 
 After selecting a profile, you must update the system's *@world set*, which is just all the packages a profile uses. You should also use this if you ever make any changes to the USE flag in your make.conf.
@@ -352,12 +351,15 @@ echo "Pacific/Auckland" > /etc/timezone
 emerge --config sys-libs/timezone-data
 ```
 
-Now we're going to set our locale, which defines how dates are displayed, what alphabet you use, etc. This guide contains a New Zealand locale.gen file, but you can edit it for your own locale
+Now we're going to set our locale, which defines how dates are displayed, what alphabet you use, etc. I will be setting a New Zealand locale in the file */etc/locale.gen*. This is the contents of that file:
 ```
-cd /tmp
-wget https://github.com/Razorfang/MyGentoo/raw/main/locale.gen
-cp /tmp/locale.gen /etc/locale.gen
-rm /tmp/locale.gen
+C.UTF8 UTF-8
+en_NZ ISO-8859-1
+en_NZ.UTF-8 UTF-8
+```
+
+Once you've edited your locale, run the following:
+```
 locale-gen
 eselect locale list
 # Find your locale in the list. In my case, I want en_NZ.utf8, which has index 6
@@ -380,17 +382,27 @@ Next, install pciutils, which is required if you are using PCI devices (such as 
 emerge -q sys-apps/pciutils
 ```
 
-Now, before we go any further, you must know what your PC is like. You need to know what you want, and don't want, to support. Turning off random settings will cause a ton of trouble, so only turn off settings you KNOW you don't want (e.g. AMD drivers since I'm using an Nvidia graphics card). I will post my kernel configuration in this guide, but **it is tailored for my PC, and may or may not work for you**. Please check my configuration against what you need. If you are not sure, just skip the all custom configuration, since you can do that later.
+Now, before we go any further, you must know what your PC is like. You need to know what you want, and don't want, to support. Turning off random settings will cause a ton of trouble, so only turn off settings you KNOW you don't want (e.g. AMD drivers since I'm using an Nvidia graphics card).
 
 You can find more information about kernel configuration [here](https://wiki.gentoo.org/wiki/Kernel/Gentoo_Kernel_Configuration_Guide). Strictly speaking, kernel configuration is not essential, but it is recommended.
 
-To begin kernel configuration, you need to run this:
+For this guide, I will show what I configured, which you can use as a basis. To begin kernel configuration, you need to run this:
 ```
+eselect kernel set 1
 cd /usr/src/linux
 make menuconfig
 ```
 
-This will bring you into a large menu, full of options under more options under even more options. Some examples of my configuration are:
+This will bring you into a large menu, full of options under more options under even more options.
+
+The best thing to do is write down a list of goals you'd like to achieve with your setup, and the check the Gentoo wiki for how you should achieve that. I will do that for my build, so you can follow my example. **[x]** means that the option is built-in, **[m]** means the option is supported as a module, and **[ ]** means the option is intentionally unselected.
+
+| Goal | Configuration |
+|------|---------------|
+| Support Gentoo-specific features and don't support systemd | Gentoo Linux ---><br>[x] Gentoo Linux Support<br>Linux dynamic and persistend device naming (userspace devfs) support<br>[x] Select options required by Portage features<br>Support for init systems, system and service managers ---><br>[x] OpenRC, runit and other script based systems and managers<br>[ ] systemd  |
+
+
+Some examples of my configuration are:
 * Disabled wifi support
 * Disabled AMD microcode support
 * Enabled kernel virtualisation (KVM)
