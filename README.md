@@ -563,11 +563,12 @@ sudo emerge --ask --verbose x11-base/xorg-drivers
 sudo emerge --ask --verbose x11-base/xorg-server
 sudo emerge --ask --verbose x11-apps/xinit
 
-# You also need a terminal emulator, which will display your command lines.
+# You also need a terminal emulator, which will display your command lines. I willl install XTerm.
 sudo emerge --ask --verbose x11-terms/xterm
+echo 'XTerm*Background: Grey7' >>~/.Xresources
+echo 'XTerm*Foreground: DeepSkyBlue3' >>~/.Xresources
+sudo xrdb ~/.Xresources
 
-# This installs a clock for x11 as well
-# sudo emerge --ask --verbose x11-apps/xclock
 ```
 
 ## Configuring a Display Manager
