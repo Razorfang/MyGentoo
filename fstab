@@ -23,14 +23,9 @@
 #       documentation for details on setting a label. To obtain the UUID, use
 #       the blkid(8) command.
 
-#LABEL=boot                                             /boot            ext4            noauto,noatime   1 2
-#UUID=58e72203-57d1-4497-81ad-97655bd56494		/		 ext4		 noatime          0 1
-#LABEL=swap                                             none             swap            sw               0 0
-#/dev/cdrom		                                /mnt/cdrom	 auto		 noauto,ro        0 0
-UUID=43C2-EA0A                                          /boot            vfat            defaults,noatime 0 2
-UUID=75d16f23-9713-4d95-a881-7d760e6e3cd9               none             swap            sw               0 0
-UUID=3045fb2a-b934-4329-8d61-d8b8a081b6ed               /                ext4            noatime          0 1
-UUID=ac6d8455-1158-4cf3-8b3d-9c1dfffdf98c               /home            ext4            noatime          0 1
-UUID=56749bec-1892-4f7e-ba25-c38f3b520821               /bulk            ext4            noatime          0 1
-/bulk/torrents/download                                 /export/torrents none            bind             0 0
+UUID=6F05-C718                            /boot vfat defaults,noatime 0 2 
+UUID=e8e4de2f-03c1-46e6-8374-3f641514e625 none  swap sw               0 0
+UUID=9561110e-dce0-4473-b078-270407740566 /     ext4 noatime          0 1
+UUID=086e0b0f-178b-477e-ad09-dbc025a05010 /home ext4 noatime          0 1
+UUID=df593b43-8c67-405f-bbf2-ff00ec2e0f15 /bulk ext4 noatime          0 1
 
