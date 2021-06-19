@@ -8,6 +8,8 @@ This information will be mostly taken from the excellent youtube video by [Menta
 
 This guide will be for x86_64 PCs (which Gentoo calls amd64, and is almost certainly what your computer's architecture is). More details can be found in the [Gentoo AMD64 Handbook](https://wiki.gentoo.org/wiki/Handbook:AMD64) if you desire. 
 
+***Disclaimer:*** I am not responsible for bricking your system. That's your fault for following the advice of some stranger on the internet.
+
 ## Getting Started
 
 If you're not already running Linux, you'll need to find a live image, which is where you'll be performing the installation from. This image needs burned onto a USB flash drive or a CD (I recommend the flash drive). You can do this directly from Windows 10, or you can use a tool like Balena Etcher if you prefer.
@@ -395,46 +397,55 @@ make menuconfig
 
 This will bring you into a large menu, full of options under more options under even more options.
 
-The best thing to do is write down a list of goals you'd like to achieve with your setup, and the check the Gentoo wiki for how you should achieve that. I will do that for my build, so you can follow my example. **[x]** means that the option is built-in, **[m]** means the option is supported as a module, and **[ ]** means the option is intentionally unselected.
+The best thing to do is write down a list of goals you'd like to achieve with your setup, and the check the Gentoo wiki for how you should achieve that. I will do that for my build, so you can follow my example. **[y]** means that the option is built-in, **[M]** means the option is supported as a module, and **[n]** means the option is intentionally not supported.
 
 | Goal | Configuration |
 |------|---------------|
-| Support Gentoo-specific features and don't support systemd | Gentoo Linux ---><br>[x] Gentoo Linux Support<br>Linux dynamic and persistend device naming (userspace devfs) support<br>[x] Select options required by Portage features<br>Support for init systems, system and service managers ---><br>[x] OpenRC, runit and other script based systems and managers<br>[ ] systemd  |
+| Support Gentoo-specific features and don't support systemd | Gentoo Linux ---><br>[y] Gentoo Linux Support<br>Linux dynamic and persistend device naming (userspace devfs) support<br>[y] Select options required by Portage features<br>Support for init systems, system and service managers ---><br>[y] OpenRC, runit and other script based systems and managers<br>[n] systemd  |
+| Disable wifi support because I'm not using Wifi | Neworking Support ---><br>Wireless ---><br>[n] Generic IEEE 802.11 Networking Stack (mac80211)<br><br>Device Drivers ---><br>Network Device Support ---><br>[n] Wireless LAN |
+| Enable kernel virtualisation (KVM) | Virtualization ---><br> [y] Kernel-based Virtual Machine (KVM) support<br>[y] KVM for Intel (and compatible) processors support |
+| Enable VPN functionality | Device Drivers ---><br>Network Device Support ---><br>[y] Universal TUN/TAP device driver support |
+| Enable Nouveau Drivers for NVIDIA GPUs | Device Drivers ---><br>Graphics Support ---><br>Nouveau (NVIDIA) cards<br><br>Device Drivers ---><br>Generic Driver Options ---><br>Firmware loader ---><br>() Build named firmware blobs into the kernel binary<br>(/lib/firmware) Firmware blobs root directory |
+| Disable AMD CPU Microcode because I'm using an Intel CPU | Processor type and features ---><br>[n] AMD microcode loading support |
+| Enable support for PulseAudio | Device Drivers ---><br>Sound card support ---><br>Advanced Linux Sound Architecture ---><br>USB Sound Devices ---><br>[M] USB Audio/MIDI drivers |
+| Enable support for the Wii-U Gamecube Controller Adapter | Device Drivers ---><br>HID Support ---><br>Special HID drivers ---><br>[M] Nintendo Wii / Wii U peripherals |
+| Additional configuration for USB input devices | Device Drivers ---><br>HID Support ---><br>[y] Battery level reporting fir HID devices<br> |
+| Allow execution of 32-bit binaries | Processor type and features ---><br>[n] Machine Check / overheating reporting<br><br>Binary Emulations ---><br>[y] IA32 Emulation |
+| Enable support for GPT labels | Enable the block layer ---><br>Partition Types ---><br>[y] Advanced partition selection<br>[y] EFI GUID Partition support |
 
-
-Some examples of my configuration are:
-* Disabled wifi support
-* Disabled AMD microcode support
-* Enabled kernel virtualisation (KVM)
-
-Make your own changes and save them. Afterwards, we build the kernel.
+After configuration, we build the kernel.
 ```
-make
-make modules_install
-make install
+make -j4
+make -j4 modules_install
+make -j4 install
 ```
 
 ## Making an initramfs
 
 To make it easier for the kernel to boot your system, we will create what's called an *initramfs*. This is basically an archive of information used by the kernel before your system's init system (like OpenRC) starts.
 
+
 ```
-# If you copied my config, specify the full path to that file as the argument to --kernel-config instead
-# --lvm means enable LVM support and --mdadm enables software RAID
+Install the package. The autounmask option will allow this package to use the non-free linux-fw-redistributable and no-source-code licenses.
+emerge --ask --autounmask sys-kernel/genkernel
+etc-update
 emerge --ask sys-kernel/genkernel
-genkernel --lvm --mdadm --install --kernel-config=/usr/src/linux/.config initramfs
 
 # This step installs additional firmware for devices like network interfaces.
 emerge --ask sys-kernel/linux-firmware
+
+# If you copied my config, specify the full path to that file as the argument to --kernel-config instead
+# --lvm means enable LVM support and --mdadm enables software RAID
+genkernel --lvm --mdadm --install --kernel-config=/usr/src/linux/.config initramfs
 ```
 
 ## Creating /etc/fstab
 
-All partitions of your system must be listed inside the file */etc/fstab*. To configure this file, you will need to find the *UUID* of each partition, which is a unique identifier for that partition. To find the UUIDs, run this command, **replacing /dev/sdb with your hard drive's name**:
+All partitions of your system must be listed inside the file */etc/fstab*. To configure this file, you will need to find the *UUID* of each partition, which is a unique identifier for that partition. To find the UUIDs, run this command:
 ```
-blkid | grep /dev/sdb
+blkid
 ```
-**This repository contains my /etc/fstab file. Replace the UUID of each partition with your own UUIDs, then copy it to /etc/fstab.**
+This repository contains my /etc/fstab file. You can use it as an example to learn how yours should be set up.
 
 ## Networking Configuration
 
@@ -474,24 +485,24 @@ emerge sys-fs/e2fsprogs
 
 ```
 
-Optional: And install a logging daemon:
+Optional: Install a logging daemon:
 ```
 emerge app-admin/sysklogd
 rc-update add sysklogd default`
 ```
 
-Optional: And a cron daemon, for scheduling commands:
+Optional: Install a cron daemon, for scheduling commands:
 ```
 emerge sys-process/cronie
 rc-update add cronie default
 ```
 
-Optional: And allow remote access:
+Optional: Allow remote access over SSH:
 ```
 rc-update add sshd default
 ```
 
-Optional: And improve file indexing:
+Optional: Improve file indexing:
 ```
 emerge --ask sys-apps/mlocate
 ```
@@ -507,24 +518,29 @@ grub-mkconfig -o /boot/grub/grub.cfg
 
 ## Configuring Users
 
-Now, we'll install sudo, so that we can run commands as root after installation finishes:
-```
-emerge app-admin/sudo
-```
-
-TODO: Configuration of file *sudoers*
-
 We're now going to add another user, since currently, we are root, which is the only user:
 ```
 useradd -m -G users,wheel,audio -s /bin/bash <username>
 passwd <username>
 ```
 
-Finally, we need to unmount everything and reboot the system. **Replace sdbX with your partitions if needed**:
+You can do this for as many users as you feel like. Each one will create a directory in the */home* path called */home/<username>*, which is used to store that user's files.
+
+Next, we need to edit the file */etc/sudoers*. Look in that file and follow the instructions of this line:
 ```
-umount /dev/sdb5
-umount /dev/sdb4
-umount /dev/sdb2
+## Uncomment to allow any user to run sudo if they know the password
+## of the user they are running the command as (root by default)
+# Defaults targetpw   #Ask for the password of the target user
+#  ALL ALL=(ALL) ALL  # WARNING: only use this together with 'Defaults targetpw'
+```
+
+# Rebooting at the end
+
+Finally, we need to unmount everything and reboot the system:
+```
+exit
+cd /
+umount -l /mnt/gentoo/dev{/shm,/pts,}
 umount -R /mnt/gentoo
 ```
 
@@ -533,54 +549,67 @@ And now, the big one; rebooting. Make sure you boot into the newly set up hard d
 reboot
 ```
 
-If you make it past GRUB and to the login prompt, try logging in as the user you added. If you can, try pinging something you consider important. If you can, then **congratulations, everything worked!** The only thing though is that you just have a plain black terminal with white text. The next part of the guide will involve customisation.
+If you make it past GRUB and to the login prompt, try logging in as the user you added. If you can, try pinging something you consider important. If you can, then **congratulations, everything worked!** However, you only have a plain black terminal with white text. The next part of the guide will involve beautifying your system.
 
 ## Configuring an X-server
 
 After the reboot, try logging in as a non-root user, to ensure you can do whatever you need. From this point on, the guide will be assuming you are not root.
 
-At this stage, when you log in, you should have a simple black screen, displaying your username and hostname. The next step is to create a graphical environment. This will be achieved by installing what is called *x11* (sometimes just *x*), which is used to draw nice-looking graphics on your screen.
+At this stage, when you log in, you should have a simple black screen, displaying your username and hostname. The next step is to create a graphical environment. This will be achieved by installing what is called *x11* (or just *x*), which is used to draw nice-looking graphics on your screen. There is also a modern alternative called Wayland, but this guide doesn't cover that.
 
 ```
+# Install all the x11 stuff
 sudo emerge --ask --verbose x11-base/xorg-drivers
 sudo emerge --ask --verbose x11-base/xorg-server
 sudo emerge --ask --verbose x11-apps/xinit
-sudo emerge --update --ask --deep --newuse ---with-bdeps=y @world
-sudo startx
+
+# You also need a terminal emulator, which will display your command lines.
+sudo emerge --ask --verbose x11-terms/xterm
+
+# This installs a clock for x11 as well
+# sudo emerge --ask --verbose x11-apps/xclock
 ```
-
-
-Display manager
-```
-sudo emerge --ask --verbose x11-misc/sddm
-usermod -a -G video sddm
-sudo emerge --ask --verbose gui-libs/display-manager-init
-sudo emerge --ask --verbose x11-terms/xterm x11-wm/twm x11-apps/xclock
-```
-FILE /etc/conf.d/display-manager
-DISPLAYMANAGER="sddm"
-OR IS IT
-DISPLAYMANAGER="xdm"
-
-
-root #rc-update add dbus default
-root #rc-update add display-manager default
-To start LightDM now:
-
-root #rc-service dbus start
-root #rc-service display-manager start
-
-Window manager
-
-```
-sudo USE="xinerama" emerge --ask --verbose x11-wm/i3
-sudo emerge --ask --verbose x11-misc/dmenu
-sudo emerge --ask --verbose sys-apps/accountsservice
-sudo USE="pulseaudio" emerge --ask --verbose x11-misc/i3status x11-misc/i3lock
-```
-
-Now when you reboot again, you should be brought to a login screen.
 
 ## Configuring a Display Manager
 
-TO BE CONTINUED
+A display manager is what it sounds like. It controls what's displayed on screen. It also provides a graphical login prompt when you start your system, hosts your wallpapers, etc. Basically, it make you switch from being a command line user to a desktop user.
+
+The display manager I'm installing is **SDDM**. Here's how it's installed:
+```
+sudo emerge --ask --verbose gui-libs/display-manager-init
+sudo emerge --ask --verbose x11-misc/sddm
+usermod -a -G video sddm
+```
+
+You then need to configure OpenRC, telling it to run your display manager. Part of this is editing the file */etc/conf.d/display-manager*, adding the following lines:
+```
+CHECKVT=7
+DISPLAYMANAGER="sddm"
+```
+
+Afterwards, run the following commands:
+```
+sudo rc-update add dbus default
+sudo rc-update add display-manager default
+```
+
+## Configuring a Window manager
+
+A window manager controls how your screen is split up. I will be using dwm, which is a tiling window manager. if you're doing the same, replace '6.0' with whatever file is generated by the package.
+
+```
+sudo emerge --ask --verbose x11-wm/dwm
+sudo ln -s /etc/portage/savedconfig/x11-wm/dwm-6.0 /etc/portage/savedconfig/x11-wm/dwm-6.0.h
+sudo emerge --ask --verbose x11-misc/dmenu 
+```
+
+## The End
+
+And just to be safe, one final update:
+```
+sudo emerge --update --ask --deep --newuse ---with-bdeps=y @world
+```
+
+Now, when you restart, everything should be ready to go.
+
+Welcome to Linux! [This is your life now.](https://www.youtube.com/watch?v=ezUoiaoQCTs)
