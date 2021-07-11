@@ -180,94 +180,13 @@ rm stage3-amd64-20210224T214503Z.tar.xz
 
 Gentoo uses a package manager and distribution system called *portage*, which allows you to manage packages, install and build packages differently depending on different flags, and change some pre-configured Gentoo settings.
 
-A lot of your customisation will be done from a file called *make.conf*, which is stored in */mnt /gentoo/etc/portage/make.conf* on most Gentoo systems. How you configure this file is entirely system-dependent, depending on any graphics cards you use, what software licenses you want to use, among other things.
+A lot of your customisation will be done from a file called *make.conf*, which is stored in */etc/portage/make.conf* on most Gentoo systems. How you configure this file is entirely system-dependent, depending on any graphics cards you use, what software licenses you want to use, among other things.
 
 For example, there is a variable called *USE* which controls which features packages are built with by default, *VIDEO_CARDS* which controls supported GPUs, and *GRUB_PLATFORMS* to install the correct version of GRUB during this installation.
 
 You can read the man page for make.conf to see every supported flag, which will be useful for tweaking your own installation.
 
-Here is what my make.conf looks like:
-```
-# This file is used by Portage to customise your packages.
-# Check the manual page for make.conf or the gentoo wiki for more flags.
-
-# These flags are used by your PC's C, C++, and Fortran compilers.
-# In this file, all these compilers will use the same flags.
-# --march=native will compile all packages for your PC's architecture, 
-#    ensuring nothing is ever cross-compiled.
-# -O2 means our compiler will try and optimise code during compilation.
-#    It's not recommended to go to -O3 for all packages, so we'll go
-#    with the -O2.
-# -pipe dictates how different stages of compilation communicate.
-#    -pipe means use pipes instead of temporary files.
-COMMON_FLAGS="-march=native -O2 -pipe"
-CFLAGS="${COMMON_FLAGS}"
-CXXFLAGS="${COMMON_FLAGS}"
-FCFLAGS="${COMMON_FLAGS}"
-FFLAGS="${COMMON_FLAGS}"
-
-# Defines additional software licenses for us to use.
-# I am trying to use more FOSS software, so I only want to packages that Gentoo considers free software.
-# The '-*' means 'only use the following licenses'
-ACCEPT_LICENSE="-* @FREE"
-
-# Changes Portage's default behaviour
-# * fail-clean: Clean temporary directories after a build failure
-FEATURES="fail-clean"
-
-# Stores where ebuild logs are kept.
-PORTAGE_LOGDIR="/var/log/ebuild-logs"
-
-# MAKEOPTS determines how many parallel compilations should occur when
-# installing a package. It's usually not worth making this higher than the
-# number of cores your CPU has (in my case, four).
-# -j is the number of cores.
-# -l is the maximum allowed load average, which should be about j*0.9
-MAKEOPTS="-j4 -l3.6"
-# Similar story with this one
-EMERGE_DEFAULT_OPTS="${EMERGE_DEFAULT_OPTS} --jobs=4 --load-average=3.6"
-
-# This is used to tell Portage what graphics card you are using (if any).
-# I am using an NVIDIA GTX970, so my choices are:
-# * 'nouveau' for the open-source drivers
-# * 'nvidia' for the proprietary drivers
-VIDEO_CARDS="nouveau"
-
-# This is used to tell Portage what we use to control our PC.
-# libinput is for mice and keyboards.
-INPUT_DEVICES="libinput"
-
-# Tells the system which version of GRUB to install.
-GRUB_PLATFORMS="efi-64"
-
-# Sets the language of the build output to English
-LC_MESSAGES=C
-
-# Portage uses the USE variable to determine the default way to build
-# a package. You can add/remove flags using the USE variable in this file.
-# NOTE: This does not overwrite the value of USE that Portage uses, it only
-# appends to it! It also applies to ALL packages you build, so only
-# put a flag here if you want it to apply system-wide!
-#  alsa:       Add support for the advanced linux sound architecture.
-#  elogind:    Build packages that normally require logind from systemd.
-#  examples:   Download code examples where applicable.
-#  ipv6 :      Add support for ipv6.
-#  multilib:   Allow compilation of 32-bit binaries.
-#  nouveau:    Build all packages to make use of open-source nouveau drivers.
-#  nvidia:     Enable nvidia-specific features.
-#  opengl:     Add support for openGL graphics.
-#  pulseaudio: Add support for PulseAudio.
-#  qt4:        Add support for the Qt4 framework.
-#  qt5:        Add support for the Qt5 framework.
-#  udev:       Enable virtual/udev integration.
-#  X:          Add support for X11.
-#  -emacs:     Don't add support for emacs, since I use vim.
-#  -gnome:     Don't add GNOME support.
-#  -systemd:   Don't use systemd-specific libraries.
-#  -wifi:      Don't enable wifi functionality.
-USE="alsa elogind examples ipv6 multilib nouveau nvidia opengl pulseaudio qt4 qt5 udev X -emacs -gnome -systemd -wifi"
-
-```
+My make.conf file is in this repository. Copy that file to /mnt/gentoo/etc/portage/make.conf and edit it to your liking.
 
 ## Preparing the Environment
 
