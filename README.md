@@ -2,13 +2,23 @@
 
 ![Saint iGNUcius](https://i.imgur.com/V67I2v7.png)
 
-My aim is to make the installation of a Gentoo system relatively painless. This will start out as a series of instructions, but maybe some day I'll create some scripts to help you better. Probably not though.
+My aim is to make the installation of a Gentoo system relatively painless.
+This will start out as a series of instructions, but maybe some day I'll 
+create some scripts to help you better. Probably not though.
 
-This information will be mostly taken from the excellent youtube video by [Mental Outlaw](https://www.youtube.com/watch?v=6yxJoMa05ZM&feature=emb_title), but more generalised than the video he made for his own PC. When I say generalised, I mean that I'll do this for my own PC, but I'll explain each step along the way.
+This information will be mostly taken from the excellent youtube video by 
+[Mental Outlaw](https://www.youtube.com/watch?v=6yxJoMa05ZM&feature=emb_title), 
+but more generalised than the video he made for his own PC. 
+When I say generalised, I mean that I'll do this for my own PC, 
+but I'll explain each step along the way.
 
-This guide will be for x86_64 PCs (which Gentoo calls amd64, and is almost certainly what your computer's architecture is). More details can be found in the [Gentoo AMD64 Handbook](https://wiki.gentoo.org/wiki/Handbook:AMD64) if you desire. 
+This guide will be for x86_64 PCs (which Gentoo calls amd64, 
+and is almost certainly what your computer's architecture is). 
+More details can be found in the 
+[Gentoo AMD64 Handbook](https://wiki.gentoo.org/wiki/Handbook:AMD64) if you desire. 
 
-***Disclaimer:*** I am not responsible for bricking your system. That's your fault for following the advice of some stranger on the internet.
+***Disclaimer:*** I am not responsible for bricking your system. 
+That's your fault for following the advice of some stranger on the internet.
 
 ## Getting Started
 
