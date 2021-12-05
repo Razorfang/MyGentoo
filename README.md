@@ -22,21 +22,37 @@ That's your fault for following the advice of some stranger on the internet.
 
 ## Getting Started
 
-If you're not already running Linux, you'll need to find a live image, which is where you'll be performing the installation from. This image needs burned onto a USB flash drive or a CD (I recommend the flash drive). You can do this directly from Windows 10, or you can use a tool like Balena Etcher if you prefer.
+If you're not already running Linux, find a live image, which is where you'll be 
+performing the installation from. This image needs burned onto a USB flash drive 
+or a CD (I recommend the flash drive). I recommend doing this with the Balena 
+Etcher tool, which provides a simple and clean interface for flashing images.
 
-If you are installing Gentoo on a system that's already running Linux, and it's being installed on a new hard drive, you can perform the same installation process from your host machine. Just know that you'll have to run the commands as root by using **sudo**.
+If you are installing Gentoo on a system that's already running Linux, and it's 
+being installed on a new hard drive, you can perform the same installation process 
+from your host machine. Just know that you'll have to run the commands as root 
+by using **sudo**, instead of just running them from the live image where you are 
+root by default.
 
-You can download the latest live image [here](https://www.gentoo.org/downloads/) (it's under **Boot media**) and burn it onto your USB. You'll then plug this into the PC you're installing to, reboot the PC, and boot from the USB. Your computer will probably not do this by default, in which case you'll need to open the BIOS menu, and change which medium to boot from.
+You can download the latest live image 
+[here](https://www.gentoo.org/downloads/) (it's under **Boot media**) and burn it 
+onto your USB. You'll then plug this into the PC you're installing to, 
+reboot the PC, and boot from the USB. Your computer will probably not do this by 
+default, in which case you'll need to open the BIOS menu, and change which medium 
+to boot from.
 
 ## The First Steps
 
-Once you've booted from the USB, you'll be brought to a terminal on a mostly-black screen. Before we go any further, try pinging www.gentoo.org by running the following command. If this is successful, it means we will be able to download the files needed for our installation.
+Once you've booted from the USB, you'll be brought to a terminal on a mostly-black 
+screen. Before we go any further, try pinging www.gentoo.org by running the 
+following command. If this is successful, it means we will be able to download 
+the files needed for our installation.
 
 ```
 ping -c 10 www.gentoo.org
 ```
 
-The next step is finding the target medium for installation, such as an internal hard drive (which this guide will assume). To find your hard drive, run:
+The next step is finding the target medium for installation, such as an internal 
+hard drive (which this guide will assume). To find your hard drive, run:
 ```
 fdisk -l
 
@@ -44,26 +60,41 @@ Disk /dev/sdb: 1.84 TiB ...
 # (You'll find lots of lines like this in the output)
 ```
 
-This will show you all the disks on your system, as well as how it partitioned. Find the disks that correspond to your hard drives. **Make sure you don't mix these up, or you'll format the wrong hard drive**.
+This will show you all the disks on your system, as well as how it partitioned. 
+Find the disks that correspond to your hard drives. 
+**Make sure you don't mix these up, or you'll format the wrong hard drive**, which 
+I have done once. It's a painful experience.
 
 ## Preparing the Media
 
-Hard drives are split into *partitions*, which are logical divisions between parts of the drive. These partitions are used by the system for different purposes. To properly perform this step, you will need to know how each hard drive will be used.
+Hard drives are split into *partitions*, which are logical divisions between 
+areas of the drive. These partitions are used by the system for different purposes. 
+To properly perform this step, you will need to know how each hard drive will be 
+used (i.e. are you going to use it for mass storage or to install the O.S.).
 
-I will be using one SSD for the OS, and two HDDs for storage. Here is how I plan to organise my system. This guide will be setting exactly this up, but your steps can be modified depending.
+I will be using one SSD for the OS, and two HDDs for storage. 
+Here is how I plan to organise my system. This guide will be setting exactly this 
+up, but your steps can be modified depending on your hardware and use case.
 
-You must also check if your motherboard uses BIOS or UEFI, because this affects how you create these partitions and what file systems you'll be using. My PC (as well basically all modern PCs) use UEFI, so please check the Gentoo wiki for what to do if you're using BIOS.
+You must also check if your motherboard uses BIOS or UEFI, because this 
+affects how you create these partitions and what file systems you'll be using. 
+My PC (as well basically all modern PCs) use UEFI, so please check the Gentoo wiki 
+for what to do if you're using BIOS.
 
 * 128GiB SSD
   * 2MiB /grub partition, used by the *GRUB* program to bootload the system
-  * 128MiB /boot partition, used by Linux during booting
-  * 24GiB /swap partition, used to hibernate the system, and is used when the system runs out of RAM.
+  * 128MiB /boot partition, used by Linux during booting.
+  * 24GiB /swap partition, used to hibernate the system, and is used when the 
+system runs out of RAM.
   * rest is the /root partition, which is the core of the system.
-* 2TiB HDD consisting of one large /home partiton, which is occupied by user files
-* 3TiB HDD consisting of one large partition called /bulk, which I will use for storing large files like games and movies
+* 2TiB HDD consisting of one large /home partiton, which is occupied by user files.
+* 3TiB HDD consisting of one large partition called /bulk, which I will use for 
+storing large files like games and movies.
 
 
-To make sure the hard drive is completely unpartitioned before installation, run this command, **replacing /dev/sdX with whatever your hard drives are.** You can find these paths with the *lsblk* command.
+To make sure the hard drive is completely unpartitioned before installation, 
+run this command, **replacing /dev/sdX with whatever your hard drives are.** 
+You can find these paths with the *lsblk* command.
 
 ```
 # Wipe the SSD
@@ -132,7 +163,9 @@ quit
 
 ## Creating the File Systems
 
-All your partitions will need the correct file systems on them. Basically you want to use FAT32 for boot, and ext4 for everything except the swap partition.
+All your partitions will need the correct file systems on them. 
+Basically you want to use FAT32 for boot, and ext4 for everything except 
+the swap partition.
 I obtained the names of */dev/sdX* using the *lsblk* command.
 ```
 # Create a FAT32 file system for the /boot partition on the SSD
@@ -154,14 +187,17 @@ swapon /dev/sda3
 
 ## Mounting the file systems
 
-To actually use these file systems and install Gentoo, you need to mount the root partition, which means assigning it to a path somewhere on your PC. We will also mount the home partition.
+To actually use these file systems and install Gentoo, you need to mount the 
+root partition, which means assigning it to a path somewhere on your PC. 
+We will also mount the home partition.
 ```
 mount /dev/sda4 /mnt/gentoo
 mkdir /mnt/gentoo/home
 mount /dev/sdb1 /mnt/gentoo/home
 ```
 
-Before the next step, make sure your date and time are set correctly. You can check this by running:
+Before the next step, make sure your date and time are set correctly. 
+You can check this by running:
 ```
 date
 ```
@@ -172,12 +208,21 @@ If the date and time are not correct, you'll need to set them either:
 
 ## Downloading Gentoo
 
-Gentoo distributes itself in what it calls a *stage 3 tarball*. This contains the libraries and tools you need to bootstrap the system. It also contains the basis for a particular kind of system, so you have multiple options, such as whether to use openrc or systemd, whether to use a hardened kernel or not, and whether to deny 32-bit libraries.
+Gentoo distributes itself in what it calls a *stage 3 tarball*. 
+This contains the libraries and tools you need to bootstrap the system. 
+It also contains the basis for a particular kind of system, so you have multiple 
+options, such as whether to use openrc or systemd, whether to use a hardened 
+kernel or not, and whether to deny 32-bit libraries.
 
-For this guide, I will be choosing the basic option. Since you don't have a web browser when installing from a live CD, you'll need to go to the [download](https://www.gentoo.org/downloads/#other-arches) page, find the link to the openrc tarball, then paste it into wget. It will probably be the first option listed under *stage archives*. **Replace the link next to wget with the download link for the latest tarball.**
+For this guide, I will be choosing the basic option. Since you don't have a web 
+browser when installing from a live CD, you'll need to go to the 
+[download](https://www.gentoo.org/downloads/#other-arches) page, find the link 
+to the openrc tarball, then paste it into wget. It will probably be the first 
+option listed under *stage archives*. 
+**Replace the link next to wget with the download link for the latest tarball.**
 ```
 cd /mnt/gentoo
-wget https://bouncer.gentoo.org/fetch/root/all/releases/amd64/autobuilds/20210611T113421Z/stage3-amd64-20210611T113421Z.tar.xz
+wget https://bouncer.gentoo.org/fetch/root/all/releases/amd64/autobuilds/20211128T170532Z/stage3-amd64-openrc-20211128T170532Z.tar.xz
 ```
 
 The next step is to unpack this tarball.
@@ -188,19 +233,30 @@ rm stage3-amd64-20210224T214503Z.tar.xz
 
 ## make.conf
 
-Gentoo uses a package manager and distribution system called *portage*, which allows you to manage packages, install and build packages differently depending on different flags, and change some pre-configured Gentoo settings.
+Gentoo uses a package manager and distribution system called *portage*, 
+which allows you to manage packages, install and build packages differently 
+depending on different flags, and change some pre-configured Gentoo settings.
 
-A lot of your customisation will be done from a file called *make.conf*, which is stored in */etc/portage/make.conf* on most Gentoo systems. How you configure this file is entirely system-dependent, depending on any graphics cards you use, what software licenses you want to use, among other things.
+A lot of your customisation will be done from a file called *make.conf*, 
+which is stored in */etc/portage/make.conf* on most Gentoo systems. 
+How you configure this file is entirely system-dependent, depending on any 
+graphics cards you use, what software licenses you want to use, among other things.
 
-For example, there is a variable called *USE* which controls which features packages are built with by default, *VIDEO_CARDS* which controls supported GPUs, and *GRUB_PLATFORMS* to install the correct version of GRUB during this installation.
+For example, there is a variable called *USE* which controls which features 
+packages are built with by default, *VIDEO_CARDS* which controls supported GPUs, 
+and *GRUB_PLATFORMS* to install the correct version of GRUB during this installation.
 
-You can read the man page for make.conf to see every supported flag, which will be useful for tweaking your own installation.
+You can read the man page for make.conf to see every supported flag, 
+which will be useful for tweaking your own installation.
 
-My make.conf file is in this repository. Copy that file to /mnt/gentoo/etc/portage/make.conf and edit it to your liking.
+My make.conf file is in this repository. 
+Copy that file to /mnt/gentoo/etc/portage/make.conf and edit it to your liking. 
+You can also manually edit it yourself using my file as a starting point.
 
 ## Preparing the Environment
 
-It's almost time to start work inside the new Gentoo environment. Before entering, you'll need to copy some networking settings.
+It's almost time to start work inside the new Gentoo environment. 
+Before entering, you'll need to copy some networking settings.
 ```
 cp --dereference /etc/resolv.conf /mnt/gentoo/etc/
 ```
@@ -211,7 +267,8 @@ mkdir --partents /mnt/gentoo/etc/portage/repos.conf
 cp /usr/share/portage/config/repos.conf /mnt/gentoo/etc/portage/repos.conf/gentoo.conf
 ```
 
-The next step is mounting all the file systems the kernel will need; /proc/, /sys/, and /dev/.
+The next step is mounting all the file systems the kernel will need; 
+/proc/, /sys/, and /dev/.
 ```
 mount --types proc /proc /mnt/gentoo/proc
 mount --rbind /sys /mnt/gentoo/sys
@@ -220,30 +277,36 @@ mount --rbind /dev /mnt/gentoo/dev
 mount --make-rslave /mnt/gentoo/dev
 ```
 
-Now you need to enter the new environment. After this point, all actions will be performed from inside the new Gentoo environment.
+Now you need to enter the new environment. After this point, all actions will 
+be performed from inside the new Gentoo environment.
 ```
 chroot /mnt/gentoo /bin/bash
 source /etc/profile
 export PS1="(chroot) ${PS1}"
 ```
 
-**------------------------------------------------------------------------------------------------------**
-**If you significantly mess up any stage beyond this point, you should be able to start again from here.**
-**------------------------------------------------------------------------------------------------------**
-
 Anyway, you'll need to mount the boot directory to perform the next steps:
 ```
 mount /dev/sda2 /boot
 ```
 
+**If you significantly mess up any stage beyond this point, you should be able to start again from here.**
+
+
 ## Emerge
 
-The next step is to install a snapshot of the gentoo ebuild repository. This is used by Portage to help build your system. To do this:
+The next step is to install a snapshot of the gentoo ebuild repository. 
+This is used by Portage to help build your system. To do this:
 ```
 emerge-webrsync
 ```
 
-You can now use the *emerge* command-line tool to install packages. But first, we need to choose our *profile*. Think of a profile as a building block for a Gentoo system. It sets how packages are built by default, default compiler options, allowed package versions, etc. It is possible, but non-trivial, to change profiles later, so keep that in mind.
+You can now use the *emerge* command-line tool to install packages. 
+But first, we need to choose our *profile*. 
+Think of a profile as a building block for a Gentoo system. 
+It sets how packages are built by default, default compiler options, 
+allowed package versions, etc. It is possible, but non-trivial, 
+to change profiles later, so keep that in mind.
 
 To list all the profiles, do this command. Your output may differ:
 ```
@@ -256,33 +319,46 @@ Available profile symlink targets:
 ...
 ```
 
-The star means this is your currently selected profile. I will be using the default profile. To select it, I will run:
+The star means this is your currently selected profile. 
+I will be using the default profile. To select it, I will run:
 ```
 eselect profile set 1
 # Or whatever number corresponds to basic profile.
 ```
 
-After selecting a profile, you must update the system's *@world set*, which is just all the packages a profile uses. You should also use this if you ever make any changes to the USE flag in your make.conf.
+After selecting a profile, you must update the system's *@world set*, 
+which is just all the packages a profile uses. 
+You should also run this command if you ever make any changes to the USE flag 
+in your make.conf.
 
-Running the following command will take a long time, so it's the perfect time to have a break. If you want to run it and see what packages would be installed, add the *-pv* flags at the end. This way, you can double-check which USE flags these packages will install with. To actually install the packages, remove the *-pv*.
+Running the following command will take a long time, so it's the perfect time 
+to have a break. If you want to run it and see what packages would be installed, 
+add the *-pv* flags at the end. This way, you can double-check which USE flags 
+these packages will install with. To actually install the packages, 
+remove the *-pv*.
 ```
 emerge --ask --verbose --update --deep --newuse [-pv] @world
 ```
 
-Optionally, you can replace the default text editor (Nano) with something else. I prefer using Vim, so I will replace Nano with Vim in this step:
+Optionally, you can replace the default text editor (Nano) with something else. 
+I prefer using Vim compared to nano, so I will replace Nano with Vim in this step:
 ```
 emerge -q app-editors/vim
 ```
 
 ## Setting your Timezone and Locale
 
-The next step is updating your timezone, to make sure your PC displays the correct time after installation. If you live in a different time zone than I do, please look up what yours is by typing *ls /usr/share/zoneinfo*
+The next step is updating your timezone, to make sure your PC displays the 
+correct time after installation. If you live in a different time zone than I do, 
+please look up what yours is by typing *ls /usr/share/zoneinfo*
 ```
 echo "Pacific/Auckland" > /etc/timezone
 emerge --config sys-libs/timezone-data
 ```
 
-Now we're going to set our locale, which defines how dates are displayed, what alphabet you use, etc. I will be setting a New Zealand locale in the file */etc/locale.gen*. This is the contents of that file:
+Now we're going to set our locale, which defines how dates are displayed, what 
+alphabet you use, etc. I will be setting a New Zealand locale in the file 
+*/etc/locale.gen*. This is the contents of that file:
 ```
 C.UTF8 UTF-8
 en_NZ ISO-8859-1
