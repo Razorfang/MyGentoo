@@ -263,7 +263,7 @@ cp --dereference /etc/resolv.conf /mnt/gentoo/etc/
 
 Next, you need to copy the list of repositories that you'll get everything from.
 ```
-mkdir --partents /mnt/gentoo/etc/portage/repos.conf
+mkdir --parents /mnt/gentoo/etc/portage/repos.conf
 cp /usr/share/portage/config/repos.conf /mnt/gentoo/etc/portage/repos.conf/gentoo.conf
 ```
 
@@ -333,11 +333,11 @@ in your make.conf.
 
 Running the following command will take a long time, so it's the perfect time 
 to have a break. If you want to run it and see what packages would be installed, 
-add the *-pv* flags at the end. This way, you can double-check which USE flags 
+add the *-p* flag at the end. This way, you can double-check which USE flags 
 these packages will install with. To actually install the packages, 
-remove the *-pv*.
+remove the *-p*.
 ```
-emerge --ask --verbose --update --deep --newuse [-pv] @world
+emerge --ask --verbose --update --deep --newuse [-p] @world
 ```
 
 Optionally, you can replace the default text editor (Nano) with something else. 
@@ -377,32 +377,49 @@ source /etc/profile && export PS1="(chroot) ${PS1}"
 
 ## Kernel configuration
 
-Gentoo encourages users to configure the Linux kernel to their own liking. Don't worry, it sounds harder than it is. You could use *genkernel* to automatically configure it, but this guide will opt for manual configuration.
+Gentoo encourages users to configure the Linux kernel to their own liking. 
+Don't worry, it sounds harder than it is. You could use *genkernel* to 
+automatically configure it, but this guide will opt for manual configuration.
 
 First, install the Linux kernel source code.
 ```
 emerge --ask sys-kernel/gentoo-sources
 ```
 
-Next, install pciutils, which is required if you are using PCI devices (such as graphics cards)
+Next, install pciutils, which is required if you are using PCI devices 
+(such as graphics cards).
 ```
 emerge -q sys-apps/pciutils
 ```
 
-Now, before we go any further, you must know what your PC is like. You need to know what you want, and don't want, to support. Turning off random settings will cause a ton of trouble, so only turn off settings you KNOW you don't want (e.g. AMD drivers since I'm using an Nvidia graphics card).
+Now, before we go any further, you must know what your PC is like. 
+You need to know what you want, and don't want, to support. 
+Turning off random settings will cause a ton of trouble, so only turn off 
+settings you KNOW you don't want (e.g. AMD drivers since I'm using an 
+Nvidia graphics card).
 
-You can find more information about kernel configuration [here](https://wiki.gentoo.org/wiki/Kernel/Gentoo_Kernel_Configuration_Guide). Strictly speaking, kernel configuration is not essential, but it is recommended.
+You can find more information about kernel configuration 
+[here](https://wiki.gentoo.org/wiki/Kernel/Gentoo_Kernel_Configuration_Guide). 
+Strictly speaking, kernel configuration is not essential, but it is recommended.
 
-For this guide, I will show what I configured, which you can use as a basis. To begin kernel configuration, you need to run this:
+For this guide, I will show what I configured, which you can use as a basis. 
+To begin kernel configuration, you need to run this:
 ```
 eselect kernel set 1
 cd /usr/src/linux
 make menuconfig
 ```
 
-This will bring you into a large menu, full of options under more options under even more options.
+This will bring you into a large menu, full of options under more options 
+under even more options.
 
-The best thing to do is write down a list of goals you'd like to achieve with your setup, and the check the Gentoo wiki for how you should achieve that. I will do that for my build, so you can follow my example. **[y]** means that the option is built-in, **[M]** means the option is supported as a module, and **[n]** means the option is intentionally not supported.
+The best thing to do is write down a list of goals you'd like to achieve with 
+your setup, and the check the Gentoo wiki for how you should achieve that. 
+I will do that for my build, so you can follow my example. **[y]** means that 
+the option is built into the kernel during compilation, **[M]** means the 
+option is supported as a module (i.e. the functionality is build into a kernel 
+module that requires explicit loading by the system) and **[n]** means the 
+option is intentionally not built.
 
 | Goal | Configuration |
 |------|---------------|
