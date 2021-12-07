@@ -647,7 +647,7 @@ sudo ln -s /etc/portage/savedconfig/x11-wm/dwm-6.0 /etc/portage/savedconfig/x11-
 sudo emerge --ask --verbose x11-misc/dmenu 
 ```
 
-We also need to ins
+We also need to do this:
 ```
 sudo gpasswd -a <user> video
 ```
