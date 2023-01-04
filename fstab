@@ -23,9 +23,9 @@
 #       documentation for details on setting a label. To obtain the UUID, use
 #       the blkid(8) command.
 
-UUID=6F05-C718                            /boot vfat defaults,noatime 0 2 
-UUID=e8e4de2f-03c1-46e6-8374-3f641514e625 none  swap sw               0 0
-UUID=9561110e-dce0-4473-b078-270407740566 /     ext4 noatime          0 1
-UUID=086e0b0f-178b-477e-ad09-dbc025a05010 /home ext4 noatime          0 1
-UUID=df593b43-8c67-405f-bbf2-ff00ec2e0f15 /bulk ext4 noatime          0 1
+UUID=27F0-AE02                            /boot vfat defaults,noatime 0 2 
+UUID=50ffc13d-4552-4ab6-90c2-bb94e777f99a none  swap sw               0 0
+UUID=ad73fcf5-5f09-4623-a8aa-360f340b8272 /     ext4 noatime          0 1
+UUID=8eb1396f-015b-46e0-8ad8-8c5c26d67191 /home ext4 noatime          0 1
+UUID=e1b2635b-4aee-441a-8cd9-7637396a68f3 /bulk ext4 noatime          0 1
 
