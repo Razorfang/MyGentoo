@@ -1,74 +1,106 @@
-# So you want to install Gentoo?
+# How to install Gentoo Linux (2023 Edition)
 
 ![Saint iGNUcius](https://i.imgur.com/V67I2v7.png)
 
-My aim is to make the installation of a (spefically my) Gentoo system relatively painless. This will start out as a series of instructions, but maybe some day I'll create some scripts to help you better. Probably not though.
+## Table of Contents
 
-This information will be mostly taken from the excellent youtube video by [Mental Outlaw](https://www.youtube.com/watch?v=6yxJoMa05ZM&feature=emb_title), but more generalised than the video he made for his own PC. When I say generalised, I mean that I'll do this for my own PC,  but I'll explain each step along the way.
+- [Preface](#id-preface)
+- [Live USB](#id-usb)
+- [First Boot](#id-boot1)
+- [Disk Preparation](#id-disc)
+- [Installing the OS](#id-gentoo)
 
-This guide will be for x86_64 PCs (which Gentoo calls amd64, and is almost certainly what your computer's architecture is). More details can be found in the [Gentoo AMD64 Handbook](https://wiki.gentoo.org/wiki/Handbook:AMD64) if you desire. 
+<div id='id-preface'/>
+## Preface
 
-***Disclaimer:*** I am not responsible for bricking your system. That's your fault for following the advice of some stranger on the internet.
+This document is an updated version of a document I wrote in 2021. The aim of this document is to streamline the installation of Gentoo Linux on a new PC. This document is based on information provided by the youtube user [Mental Outlaw](https://www.youtube.com/watch?v=6yxJoMa05ZM&feature=emb_title) and  by the [Gentoo wiki](https://wiki.gentoo.org/wiki/Handbook:AMD64/Full/Installation).
 
-## Getting Started
+This guide assumes you are installing Gentoo Linux on a new PC or to dual-boot on a non-Linux PC. It also assumes you have a working internet connection.
 
-If you're not already running Linux, find a live image, which is where you'll be performing the installation from. This image needs burned onto a USB flash drive or a CD (I recommend the flash drive). I recommend doing this with the Balena Etcher tool, which provides a simple and clean interface for flashing images.
-
-If you are installing Gentoo on a system that's already running Linux, and it's being installed on a new hard drive, you can perform the same installation process from your host machine. Just know that you'll have to run the commands as root by using **sudo**, instead of just running them from the live image where you are root by default.
-
-You can download the latest live image [here](https://www.gentoo.org/downloads/) (it's under **Boot media**) and burn it onto your USB. You'll then plug this into the PC you're installing to, reboot the PC, and boot from the USB. Your computer will probably not do this by default, in which case you'll need to open the BIOS menu, and change which medium to boot from.
-
-## The First Steps
-
-Once you've booted from the USB, you'll be brought to a terminal on a mostly-black screen. Before we go any further, try pinging www.gentoo.org by running the following command. If this is successful, it means we will be able to download the files needed for our installation.
+I will be installing Gentoo Linux on a PC with AMD components. The CPU is an AMD 7950X and the GPU is an AMD 7900XTX. The steps will vary slightly if you are using, for example, an Intel CPU or an NVidia GPU, but the overall process is virtually the same.
 
 ```
-ping -c 10 www.gentoo.org
+Any line of code or pseudocode that does not start with a '#' is intended for the reader to execute.
+# Any line of code that starts with a '#' is not to be executed by you. This is purely informational.
 ```
 
-The next step is finding the target medium for installation, such as an internal hard drive (which this guide will assume). To find your hard drive, run:
+<div id='id-usb'/>
+## Live USB
+
+You will need a USB stick with the minimal Gentoo Linux image installed. Find the latest minimal installation CD from [here](https://www.gentoo.org/downloads/) and download it. Then, flash that image to your USB with this command:
 ```
-fdisk -l
-
-Disk /dev/sdb: 1.84 TiB ...
-# (You'll find lots of lines like this in the output)
-```
-
-This will show you all the disks on your system, as well as how it partitioned. Find the disks that correspond to your hard drives. **Make sure you don't mix these up, or you'll format the wrong hard drive**, which I have done once. It's a painful experience.
-
-## Preparing the Media
-
-Hard drives are split into *partitions*, which are logical divisions between areas of the drive. These partitions are used by the system for different purposes. To properly perform this step, you will need to know how each hard drive will be used (i.e. are you going to use it for mass storage or to install the O.S.).
-
-I will be using one SSD for the OS, and two HDDs for storage. Here is how I plan to organise my system. This guide will be setting exactly this up, but your steps can be modified depending on your hardware and use case.
-
-You must also check if your motherboard uses BIOS or UEFI, because this affects how you create these partitions and what file systems you'll be using. My PC (as well basically all modern PCs) use UEFI, so please check the Gentoo wiki for what to do if you're using BIOS.
-
-- 128GiB SSD
-|- 2MiB /grub partition, used by the *GRUB* program to bootload the system
-|- 128MiB /boot partition, used by Linux during booting.
-|- 24GiB /swap partition, used to hibernate the system, and is used when the system runs out of RAM.
-|- rest is the /root partition, which is the core of the system.
-- 2TiB HDD consisting of one large /home partiton, which is occupied by user files.
-- 3TiB HDD consisting of one large partition called /bulk, which I will use for storing large files like games and movies.
-
-
-To make sure the hard drive is completely unpartitioned before installation, run this command, **replacing /dev/sdX with whatever your hard drives are.**  You can find these paths with the *lsblk* command. Once you know, run these commands to purge the drives:
-
-```
-# Wipe the SSD
-wipefs -a /dev/sda
-# Wipe the 2TiB drive
-wipefs -a /dev/sdb
-# Wipe the 3TiB drive
-wipefs -a /dev/sdc
+sudo dd if=<path to ISO file> of=<path to USB device> bs=8192k
+sync
+# For example, this is what I used:
+# sudo dd if=~/Downloads/install-amd64-minimal-20221211T170150Z.iso of=/dev/sdb bs=8192k
+# sync
 ```
 
-Once that's done, we'll need to use the *parted* program to format the hard drives.
+On Windows, this can be done using a tool like balenaEtcher.
 
+Once the image is flashed to the USB, plug it into the target PC and boot from the USB.
+
+<div id='id-boot1'/>
+## First Boot
+
+When you successfully boot, you will be brought to a black terminal prompt. From here, the first test is to try pinging gentoo.org, to ensure packages can be downloaded as part of the installation. If this fails, please troubleshoot your internet connection.
 ```
-# Partition the SSD
-parted -a optimal /dev/sda
+ping -c 10 gentoo.org
+```
+
+After confirming your PC has internet access, change the root password to something unique with the following command:
+```
+passwd
+```
+
+<div id='id-disc'/>
+## Disk Preparation
+
+Before going any further, think about how you want your files to be stored on your system. For example, my PC has three hard drives: an SSD for system files, an SSD for games and other files, and a HDD for movies, books, and documents. Here is how I will organise my files:
+
+**Primary SSD**
+|- /boot partition for booting
+|- /grub partition for bootloading
+|- /swap partition for hibernation
+| - /root partition for system files
+**Secondary SSD**
+| -/home partition for games and other files
+**HDD**
+| - /bulk partition for bulk files. Will contain folders such as /books and /movies
+
+All hard drive related commands will use these three hard drives in the examples. To find out the paths to your own hard drives, run the command *lsblk*. For example, here is my output:
+```
+lsblk
+# The next lines are the output. My hard drives are sda, sdb, and nvme0n1 (sdc is the USB we are using). Ignore loop0.
+loop0 
+sda
+sdb
+|__sdb1
+sdc
+|_sdc1
+|_sdc2
+|_sdc3
+|_sdc4
+nvme0n1
+```
+
+### Wiping the Disks
+
+Run the following command **for each hard drive**:
+```
+wipefs -a <path to drive>
+# Example for my PC
+# wipefs -a /dev/sda
+# wipefs -a /dev/sdb
+# wipefs -a /dev/nvme0n1
+```
+
+### Creating Partitions
+
+As mentioned earlier, you must create separate partitions for your data. This is done with the *parted* utility. The following commands are for my PC, and must be adjusted to suit your own file system.
+```
+# Partition the main drive
+parted -a optimal /dev/nvme0n1
 # Change working units to MiB
 unit mib
 $ Create identifier for the drive
@@ -87,22 +119,22 @@ name 2 boot
 
 # Create a 24GB /swap partition
 # Substitute (GB of RAM) with the RAM you have
-mkpart primary 131 [131 + 1024 * 2 * (GB of RAM)]
+mkpart primary 131 [131 + 1024 * 2 * (GB of RAM) + 1]
 # Name this partition 'swap'
 name 3 swap
 
-# Fill the rest of the SSD with the /root partition
-mkpart primary [131 + 1024 * 2 * (GB of RAM)] -1
+# Fill the rest with the /root partition
+mkpart primary [131 + 1024 * 2 * (GB of RAM) + 1] -1
 # Name this partition 'root'
 name 4 root
 
 # Verify layout with the print command.
-# Check everything looks like it's partitioned correctly.
+# Check everything looks like it is partitioned correctly.
 print
 quit
 
-# Partition the 2TiB HDD
-parted -a optimal /dev/sdb
+# Partition the SSD
+parted -a optimal /dev/sda
 unit mib
 mklabel gpt
 mkpart primary 1 -1
@@ -110,8 +142,8 @@ name 1 home
 print
 quit
 
-# Partition the 3TiB HDD
-parted -a optimal /dev/sdc
+# Partition the HDD
+parted -a optimal /dev/sdb
 unit mib
 mklabel gpt
 mkpart primary 1 -1
@@ -120,38 +152,44 @@ print
 quit
 ```
 
-## Creating the File Systems
 
-All your partitions will need the correct file systems on them. 
-Basically you want to use FAT32 for boot, and ext4 for everything except 
-the swap partition.
-I obtained the names of */dev/sdX* using the *lsblk* command.
+You can verify the layout of your drives by running *lsblk* again. If you are not satisfied, you can run the *parted* utility again.
+
+### File System Creation
+
+After partitioning is complete, you must create file systems on your disks to make them useable.
+
 ```
-# Create a FAT32 file system for the /boot partition on the SSD
-mkfs.fat -F 32 /dev/sda2
-# Create an ext4 file system for the /root partition on the SSD
-mkfs.ext4 /dev/sda4
-# Create an ext4 file system for the /home partition on the 2TiB HDD
+# Create a FAT32 file system for the /boot partition
+mkfs.fat -F 32 /dev/nvme0n1p2
+# Create an ext4 file system for the /root partition
+mkfs.ext4 /dev/nvme0n1p4
+# Create an ext4 file system for the /home partition
+mkfs.ext4 /dev/sda1
+# Create an ext4 file system for the /bulk partition
 mkfs.ext4 /dev/sdb1
-# Create an ext4 file system for the /bulk partition on the 3TiB HDDs
-mkfs.ext4 /dev/sdc1
 ```
 
 The swap partition requires different commands.
 ```
 # Set /swap as a swap partition on the SSD
-mkswap /dev/sda3
-swapon /dev/sda3
+mkswap /dev/nvme0n1p3
+swapon /dev/nvme0n1p3
 ```
 
-## Mounting the file systems
+### Mounting the file systems
 
-To actually use these file systems and install Gentoo, you need to mount the root partition, which means assigning it to a path somewhere on your PC. We will also mount the home partition.
+To use these file systems and install Gentoo, you need to mount the root partition, which means assigning it to a path somewhere on your PC. We will also mount the home partition.
 ```
-mount /dev/sda4 /mnt/gentoo
+mount /dev/nvme0n1p4 /mnt/gentoo
 mkdir /mnt/gentoo/home
-mount /dev/sdb1 /mnt/gentoo/home
+mount /dev/sda1 /mnt/gentoo/home
+mkdir /mnt/gentoo/bulk
 ```
+
+<div id='id-gentoo'/>
+## Installing the OS
+
 
 Before the next step, make sure your date and time are set correctly. You can check this by running:
 ```
@@ -161,14 +199,12 @@ If the date and time are not correct, you'll need to set them either:
 * Manually, by using the *date* command
 * Automatically, by connecting to an ntp server with *ntpd*
 
-## Downloading Gentoo
-
 Gentoo distributes itself in what it calls a *stage 3 tarball*. This contains the libraries and tools you need to bootstrap the system. It also contains the basis for a particular kind of system, so you have multiple options, such as whether to use openrc or systemd, whether to use a hardened kernel or not, and whether to deny 32-bit libraries.
 
 For this guide, I will be choosing the basic option. Since you don't have a web browser when installing from a live CD, you'll need to go to the [download](https://www.gentoo.org/downloads/#other-arches) page, find the link to the openrc tarball, then paste it into wget. It will probably be the first option listed under *stage archives*. **Replace the link next to wget with the download link for the latest tarball.**
 ```
 cd /mnt/gentoo
-wget https://bouncer.gentoo.org/fetch/root/all/releases/amd64/autobuilds/20211128T170532Z/stage3-amd64-openrc-20211128T170532Z.tar.xz
+wget https://bouncer.gentoo.org/fetch/root/all/releases/amd64/autobuilds/20230101T164658Z/stage3-amd64-openrc-20230101T164658Z.tar.xz
 ```
 
 The next step is to unpack this tarball.
@@ -177,7 +213,7 @@ tar xpvf stage3-amd64-20210224T214503Z.tar.xz --xattrs-include='*.*' --numeric-o
 rm stage3-amd64-20210224T214503Z.tar.xz
 ```
 
-## make.conf
+### make.conf
 
 Gentoo uses a package manager and distribution system called *portage*, which allows you to manage packages, install and build packages differently depending on different flags, and change some pre-configured Gentoo settings.
 
@@ -189,7 +225,7 @@ You can read the man page for make.conf to see every supported flag, which will 
 
 My make.conf file is in this repository. Copy that file to /mnt/gentoo/etc/portage/make.conf and edit it to your liking. You can also manually edit it yourself using my file as a starting point.
 
-## Preparing the Environment
+### Preparing the Environment
 
 It's almost time to start work inside the new Gentoo environment. Before entering, you'll need to copy some networking settings.
 ```
@@ -220,15 +256,15 @@ source /etc/profile
 export PS1="(chroot) ${PS1}"
 ```
 
-Anyway, you'll need to mount the boot directory to perform the next steps:
+You'll need to mount the boot directory to perform the next steps:
 ```
-mount /dev/sda2 /boot
+mount /dev/nvme0n1p2 /boot
 ```
+
+### Packages
+
 
 **If you significantly mess up any stage beyond this point, you should be able to start again from here.**
-
-
-## Emerge
 
 The next step is to install a snapshot of the gentoo ebuild repository. This is used by Portage to help build your system. To do this:
 ```
@@ -236,6 +272,8 @@ emerge-webrsync
 ```
 
 You can now use the *emerge* command-line tool to install packages. The first thing we'll do is install an *ntp* client, so that our system's time is always correct. We'll also make sure this is always done on boot.
+
+Now is also a good time to understand the use flags of packages. When you install a packages with the *--ask* option, it will show you which USE flags are available. Enabled flags are in red, and disabled flags are in blue. It's always good to review the default flags before installing a package, to ensure you're getting the features you want.
 
 ```
 emerge --ask net-misc/ntp
@@ -274,7 +312,7 @@ Optionally, you can replace the default text editor (Nano) with something else. 
 emerge -q app-editors/vim
 ```
 
-## Setting your Timezone and Locale
+### Setting your Timezone and Locale
 
 The next step is updating your timezone, to make sure your PC displays the correct time after installation. If you live in a different time zone than I do, please look up what yours is by typing *ls /usr/share/zoneinfo*
 ```
@@ -301,7 +339,7 @@ source /etc/profile && export PS1="(chroot) ${PS1}"
 
 ## Kernel configuration
 
-Gentoo encourages users to configure the Linux kernel to their own liking. Don't worry, it sounds harder than it is. You could use *genkernel* to automatically configure it, but this guide will opt for manual configuration.
+Gentoo encourages users to configure the Linux kernel to their own liking. You could use *genkernel* to automatically configure it, but this guide will opt for manual configuration.
 
 First, download the Linux kernel source code.
 ```
@@ -313,11 +351,11 @@ Next, install pciutils, which is required if you are using PCI devices (such as 
 emerge -q sys-apps/pciutils
 ```
 
-Now, before we go any further, you must know what your PC is like. You need to know what you want, and don't want, to support. Turning off random settings will cause a ton of trouble, so only turn off settings you KNOW you don't want (e.g. AMD drivers since I'm using an Nvidia graphics card).
+Now, before we go any further, you must know what your PC is like. You need to know what you want, and don't want, to support. Turning off random settings will cause a ton of trouble, so only turn off settings you KNOW you don't want (e.g. nvidia drivers since I'm using an AMD graphics card).
 
 You can find more information about kernel configuration [here](https://wiki.gentoo.org/wiki/Kernel/Gentoo_Kernel_Configuration_Guide). Strictly speaking, kernel configuration is not essential, but it is recommended.
 
-For this guide, I will show what I configured, which you can use as a basis. To begin kernel configuration, you need to run this:
+To begin kernel configuration, you need to run this:
 ```
 eselect kernel set 1
 cd /usr/src/linux
@@ -329,6 +367,7 @@ This will bring you into a large menu, full of options under more options under 
 The best thing to do is write down a list of goals you'd like to achieve with your setup, and the check the Gentoo wiki for how you should achieve that. I will do that for my build, so you can follow my example. **[y]** means that the option is built into the kernel during compilation, **[M]** means the option is supported as a module (i.e. the functionality is build into a kernel module that requires explicit loading by the system) and **[n]** means the option is intentionally not built.
 
 **Required Options**
+
 * Device Drivers --->
  * Generic Driver Options --->
   * [y] Maintain a devtmpfs filesystem to mount at /dev
@@ -391,30 +430,53 @@ Don't forget to include support in the kernel for the network (Ethernet or wirel
 **Enable kernel virtualisation (KVM) if using virtual machines**
 * [y] Virtualization --->
  * [y] Kernel-based Virtual machine (KVM) support
-  * [y] KVM for Intel (and compatible) processors support
-
+  * [y] KVM for AMD processors support
+  
 **Options required for VPN usage**
 * Device Drivers --->
  * [y] Network device support --->
   * [y] Universal TUN/TAP device driver support
 
-**Options required for GTX970 graphics card and to disable AMD features**
+**Options required for AMD 7900 XT graphics card and to disable nvidia/intel features**
 * Processor type and features --->
  * [y] MTRR (Memory Type Range Register) support
+* Memory management options -->
+ * [y] Memory Hotplug -->
+  * [y] Allow for memory hot remove
+ * [y] Device memory (pmem, HMM, etc...) hotplug support
+ * [y] Unaddressable device memory (GPU memory, ...) 
+ 
 * Device Drivers --->
  * Graphics support --->
-  * [n] Nouveau (NVIDIA) cards
-  * Frame buffer devices --->
-   * [y] Support for frame-buffer devices --->
-    * [n] nVidia Framebuffer Support
-    * [n] nVidia Riva support
+  * [y] Laptop Hybrid Graphics - GPU switching support
+  * [y] Direct Rendering Manager (XFree86 4.1.0 and higher DRI support) --->
+  * [y] Enable legacy fbdev support for your modesetting driver
+  * [n] ATI Radeon
+  * [m] AMD GPU
+  *  ACP (Audio CoProcessor) Configuration  ---> 
+   * [y] Enable AMD Audio CoProcessor IP support
+   * Display Engine Configuration  --->
+    * [y] AMD DC - Enable new display engine
+    * [y] Enaable HDCP support in DC
+    * [y] Enable secure display support
+   * [y] HSA kernel driver for AMD GPU devices
+  * [n] Intel 8xx/9xx/G3x/G4x/HD Graphics
+  * [m] Virtual Box Graphics Card
+  * Sound card support  --->
+   * Advanced Linux Sound Architecture  --->
+     * [y] PCI sound devices --->
+     * HD-Audio  --->
+     * [y]HD Audio PCI
+     * [y] Support initialization patch loading for HD-audio
+     * [y] Build HDMI/DisplayPort HD-audio codec support
  * Character devices --->
   * [y] IPMI top-level message handler
 
-**Disable AMD microcode because I'm using an Intel CPU**
+**Disable intel microcode because I'm using an AMD CPU**
 * Processor types and features --->
  * CPU microcode loading support
-  * [n] AMD microcode loading support
+  * [n] Intel microcode loading support
+  * [y] AMD microcode loading support
 
 **Enable support for PulseAudio**
 * Device Drivers --->
@@ -445,8 +507,8 @@ Don't forget to include support in the kernel for the network (Ethernet or wirel
   * [y] Generic input layer (needed for keyboard, mouse, ...)
    * [y] Joysticks/Gamepads
     * [y] X-Box gamepad support
-     * [y] X-Box gamepad rumble support
-     * [y] LED Support for Xbox 360 controller 'BigX' LED
+     * [y] X-Box gamepad rumble supportThursday, 05. January 2023 12:38AM 
+
 
 **Allow execution of 32-bit binaries**
 * Processor types and features --->
@@ -460,26 +522,32 @@ Don't forget to include support in the kernel for the network (Ethernet or wirel
    * [y] Advanced partition selection
     * [y] EFI GUID Partition support
 
-**Preparing for the  nVidia drivers**
+**Preparing for the  AMD drivers**
 
 * Device Drivers --->
+ * Firmware Drivers -->
+  * [y] Mark VGA/VBE/EFI FB as generic system framebuffer
  * Graphics support --->
+ * Frame buffer Devices -->
+  * Support for frame buffer devices -->
+   * [y] EFI-based Framebuffer Support
   * [y] VGA Arbitration
-  * Frame buffer devices --->
-   * [y] Support for frame-buffer devices --->
-    * [n] Simple framebuffer support
- * Generic Driver Options --->
-  * Firmware loader --->
-   * (nvidia/gm204/acr/bl.bin nvidia/gm204/acr/ucode_load.bin nvidia/gm204/acr/ucode_unload.bin nvidia/gm204/gr/fecs_bl.bin nvidia/gm204/gr/fecs_data.bin nvidia/gm204/gr/fecs_inst.bin nvidia/gm204/gr/fecs_sig.bin nvidia/gm204/gr/gpccs_bl.bin nvidia/gm204/gr/gpccs_data.bin nvidia/gm204/gr/gpccs_inst.bin nvidia/gm204/gr/gpccs_sig.bin nvidia/gm204/gr/sw_bundle_init.bin nvidia/gm204/gr/sw_ctx.bin nvidia/gm204/gr/sw_method_init.bin nvidia/gm204/gr/sw_nonctx.bin) Build named firmware blobs into the kernel binary
+
+This next step is only necessary for AMD. The steps are different for nvidia.
+```
+emerge -av linux-firmware
+emerge -av media-libs/mesa
+emerge -av dev-libs/rocm-opencl-runtime
+```
 
 After configuration, we build the kernel.
 ```
-make -j4
+make -j$(nproc)
 make modules_install
 make install
 ```
 
-## Creating /etc/fstab
+### Creating /etc/fstab
 
 All partitions of your system must be listed inside the file */etc/fstab*. To configure this file, you will need to find the *UUID* of each partition, which is a unique identifier for that partition. To find the UUIDs, run this command:
 ```
@@ -487,7 +555,7 @@ blkid
 ```
 This repository contains my /etc/fstab file. You can use it as an example to learn how yours should be set up.
 
-## Networking Configuration
+### Networking Configuration
 
 Optional: Change your PC's name by editing */etc/conf.d/hostname*. This isn't an IP address; it's a nice name like "GentooBox" or "MyPC".
 
@@ -509,10 +577,10 @@ Next we will make sure the system runs DHCP at boot:
 emerge net-misc/dhcpcd
 cd /etc/init.d
 ln -s net.lo net.<interface>
-rc-update add net.enp3s0 default`
+rc-update add net.<interface> default
 ```
 
-## Other Steps
+### Other Steps
 
 While we're at it, let's set the root password:
 ```
@@ -549,7 +617,7 @@ Optional: Improve file indexing:
 emerge --ask sys-apps/mlocate
 ```
 
-## Bootloader
+### Bootloader
 
 To actually boot the system, we need a bootloader. We'll be using GRUB2:
 ```
@@ -558,7 +626,7 @@ grub-install --target=x86_64-efi --efi-directory=/boot --removable
 grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
-## Configuring Users
+### Configuring Users
 
 We need to install *sudo*, so that we can use root commands as a user.
 ```
@@ -581,7 +649,7 @@ Then, we need to edit the file */etc/sudoers*. Look in that file and follow the 
 #  ALL ALL=(ALL) ALL  # WARNING: only use this together with 'Defaults targetpw'
 ```
 
-# Rebooting at the end
+## Rebooting at the end
 
 Finally, we need to unmount everything and reboot the system:
 ```
@@ -606,13 +674,10 @@ At this stage, when you log in, you should have a simple black screen, displayin
 
 ```
 # Install all the x11 stuff
-sudo emerge --ask --verbose x11-base/xorg-drivers x11-base/xorg-server x11-apps/xinit
+sudo emerge --ask --verbose x11-base/xorg-drivers x11-base/xorg-server x11-apps/xinit x11-apps/xrandr
 
-# You also need a terminal emulator, which will display your command lines. I willl install XTerm.
-sudo emerge --ask --verbose x11-terms/xterm
-echo 'XTerm*Background: Grey7' >>~/.Xresources
-echo 'XTerm*Foreground: DeepSkyBlue3' >>~/.Xresources
-sudo xrdb ~/.Xresources
+# You also need a terminal emulator, which will display your command lines. I willl install Kitty.
+sudo emerge --ask dev-vcs/git x11-terms/kitty
 ```
 
 ## Configuring a Display Manager
@@ -622,7 +687,7 @@ A display manager is what it sounds like. It controls what's displayed on screen
 The display manager I'm installing is **SDDM**. Here's how it's installed:
 ```
 sudo emerge --ask --verbose gui-libs/display-manager-init x11-misc/sddm
-usermod -a -G video sddm
+sudo usermod -a -G video sddm
 ```
 
 You then need to configure OpenRC, telling it to run your display manager. Part of this is editing the file */etc/conf.d/display-manager*, adding the following lines:
@@ -663,3 +728,5 @@ sudo emerge --update --ask --deep --newuse ---with-bdeps=y @world
 Now, when you restart, everything should be ready to go.
 
 Welcome to Linux! [This is your life now.](https://www.youtube.com/watch?v=ezUoiaoQCTs)
+
+
